@@ -111,25 +111,15 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	}
 }
 
-void AMainCharacter::PlayAttackMontage()
+void AMainCharacter::PlayMontageAtSection(UAnimMontage* Montage, FName Section)
 {
+	if (!GetMesh()) return;
+	
 	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance()) {
-		if (UAnimMontage* AttackMontage = MeleeSystemComponent->GetEquippedWeapon()->GetAttackMontage())
+		if (Montage)
 		{
-			AnimInstance->Montage_Play(AttackMontage);
-			const unsigned short Section = FMath::RandRange(1,3);
-			AnimInstance->Montage_JumpToSection(FName("Attack" + FString::FromInt(Section)), AttackMontage);
-		}
-	}
-}
-
-void AMainCharacter::PlayEquipDisarmMontage(const FName& SectionName)
-{
-	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance()) {
-		if (EquipDisarmMontage)
-		{
-			AnimInstance->Montage_Play(EquipDisarmMontage);
-			AnimInstance->Montage_JumpToSection(SectionName, EquipDisarmMontage);
+			AnimInstance->Montage_Play(Montage);
+			AnimInstance->Montage_JumpToSection(Section, Montage);
 		}
 	}
 }

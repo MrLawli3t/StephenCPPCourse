@@ -25,8 +25,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	virtual void PlayAttackMontage() override;
-	virtual void PlayEquipDisarmMontage(const FName& SectionName) override;
+	virtual void PlayMontageAtSection(UAnimMontage* Montage, FName Section);
 
 protected:
 	virtual void BeginPlay() override;
@@ -71,8 +70,9 @@ private:
 	TObjectPtr<UMeleeSystemComponent> MeleeSystemComponent;
 
 public:
-	FORCEINLINE UMeleeSystemComponent* GetMeleeSystemComponent() const {return MeleeSystemComponent;}
+	FORCEINLINE virtual UMeleeSystemComponent* GetMeleeSystemComponent() const override {return MeleeSystemComponent;}
 	FORCEINLINE virtual USkeletalMeshComponent* IGetMesh() const override {return GetMesh();}
 	FORCEINLINE virtual AController* IGetController() const override {return Controller;}
 	FORCEINLINE virtual AActor* GetActor() override {return this;}
+	FORCEINLINE virtual UAnimMontage* GetEquipDisarmMontage() const override {return EquipDisarmMontage;}
 };

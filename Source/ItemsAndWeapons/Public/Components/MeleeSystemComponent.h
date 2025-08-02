@@ -44,7 +44,7 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, Category="Item")
 	TObjectPtr<AItem> OverlappingItem;
-
+	
 	UPROPERTY(VisibleInstanceOnly, Category="Item")
 	TObjectPtr<AWeapon> EquippedWeapon;
 	
@@ -52,14 +52,17 @@ private:
 	
 	FPointDamageEvent DamageEvent;
 
-	EActionState ActionState = EActionState::EAS_Unoccupied;
+	int ComboIndex = 0;
+	bool bCanContinueCombo = false;
 
+	EActionState ActionState = EActionState::EAS_Unoccupied;
 	EEquipState EquipState = EEquipState::ECS_Unequipped;
 
 public:
 	FORCEINLINE void SetOverlappingItem(AItem* Item) {OverlappingItem = Item;}
 	FORCEINLINE EActionState GetActionState() const {return ActionState;}
 	FORCEINLINE EEquipState GetEquipState() const {return EquipState;}
+	FORCEINLINE void SetCanContinueCombo(const bool CanContinue) {bCanContinueCombo = CanContinue;}
 	FORCEINLINE AWeapon* GetEquippedWeapon() const {return EquippedWeapon;}
 	FORCEINLINE USkeletalMeshComponent* GetMesh() const;
 };

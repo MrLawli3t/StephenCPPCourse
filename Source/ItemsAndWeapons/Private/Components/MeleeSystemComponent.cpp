@@ -41,11 +41,11 @@ void UMeleeSystemComponent::ToggleEquipped()
 		if (CanArm())
 		{
 			ActionState = EActionState::EAS_Equipping;
-			OwningActor->PlayEquipDisarmMontage(FName("Equip"));
+			OwningActor->PlayMontageAtSection(OwningActor->GetEquipDisarmMontage(), FName("Equip"));
 		} else if (CanDisarm())
 		{
 			ActionState = EActionState::EAS_Equipping;
-			OwningActor->PlayEquipDisarmMontage(FName("Disarm"));
+			OwningActor->PlayMontageAtSection(OwningActor->GetEquipDisarmMontage(), (FName("Disarm")));
 		}
 	}
 	
@@ -57,7 +57,8 @@ void UMeleeSystemComponent::Attack()
 	{
 		EquippedWeapon->StartAttackTrace();
 		ActionState = EActionState::EAS_Attacking;
-		OwningActor->PlayAttackMontage();
+		OwningActor->PlayMontageAtSection(EquippedWeapon->GetAttackMontage(), FName("Attack" + FString::FromInt(ComboIndex+1)));
+		ComboIndex = (ComboIndex + 1) % 3;
 	}
 }
 
@@ -73,16 +74,12 @@ bool UMeleeSystemComponent::CanArm() const
 
 bool UMeleeSystemComponent::CanAttack() const
 {
-	return ActionState == EActionState::EAS_Unoccupied && EquipState != EEquipState::ECS_Unequipped && EquippedWeapon;
+	return (ActionState == EActionState::EAS_Unoccupied || bCanContinueCombo) && EquipState != EEquipState::ECS_Unequipped && EquippedWeapon;
 }
 
 void UMeleeSystemComponent::AttackEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
-	if (EquippedWeapon)
-	{
-		EquippedWeapon->StopAttackTrace();
-	}
 }
 
 void UMeleeSystemComponent::AttackHit(FHitResult HitResult)

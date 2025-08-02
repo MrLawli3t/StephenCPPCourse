@@ -18,7 +18,7 @@ void UAttackEndNotify::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBas
 		Actor->GetMeleeSystemComponent()->AttackEnd();
 		if (UAnimInstance* AnimInstance = MeshComp->GetAnimInstance())
 		{
-			AnimInstance->Montage_Stop(0.2f, Actor->GetMeleeSystemComponent()->GetEquippedWeapon()->GetAttackMontage());
+			AnimInstance->Montage_Stop(0.4f, Actor->GetMeleeSystemComponent()->GetEquippedWeapon()->GetAttackMontage());
 		}
 	}
 }
