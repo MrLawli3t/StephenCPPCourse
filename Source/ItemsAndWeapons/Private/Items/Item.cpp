@@ -2,8 +2,9 @@
 
 #include "Items/Item.h"
 
+#include "Components/MeleeSystemComponent.h"
 #include "Components/SphereComponent.h"
-#include "Interfaces/ItemInteractor.h"
+#include "Interfaces/MeleeActor.h"
 
 // Sets default values
 AItem::AItem()
@@ -30,33 +31,27 @@ void AItem::BeginPlay()
 void AItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (IItemInteractor* Interactor = Cast<IItemInteractor>(OtherActor))
+	if (const IMeleeActor* Interactor = Cast<IMeleeActor>(OtherActor))
 	{
-		Interactor->SetOverlappingItem(this);
+		Interactor->GetMeleeSystemComponent()->SetOverlappingItem(this);
 	}
 }
 
 void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex)
 {
-	if (IItemInteractor* Interactor = Cast<IItemInteractor>(OtherActor))
+	if (const IMeleeActor* Interactor = Cast<IMeleeActor>(OtherActor))
 	{
-		Interactor->SetOverlappingItem(nullptr);
+		Interactor->GetMeleeSystemComponent()->SetOverlappingItem(nullptr);
 	}
 }
 
 // Called every frame
-void AItem::Tick(float DeltaTime)
+void AItem::Tick(const float DeltaTime)
 {
 	RunningTime += DeltaTime;
 	if (ItemState == EItemState::EIS_Hovering)
 	{
 		AddActorWorldOffset(FVector(0.f,0.f,Amplitude * FMath::Sin(RunningTime*Frequency)));
 	}
-}
-
-template <typename T>
-T AItem::Avg(T First, T Second)
-{
-	return (First + Second) / 2; 
 }

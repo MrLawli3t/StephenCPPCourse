@@ -17,9 +17,7 @@ public class BasicEnemies : ModuleRules
             new string[]
             {
                 "CoreUObject",
-                "Engine",
-                "Slate",
-                "SlateCore"
+                "Engine"
             }
         );
     }

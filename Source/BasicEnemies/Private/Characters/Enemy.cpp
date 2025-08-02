@@ -10,7 +10,7 @@
 
 AEnemy::AEnemy()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	GetMesh()->SetCollisionObjectType(ECC_WorldDynamic);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
@@ -18,13 +18,15 @@ AEnemy::AEnemy()
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Block);
 
+	GetCapsuleComponent()->SetGenerateOverlapEvents(false);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Block);
 }
 
 void AEnemy::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	OnTakePointDamage.AddDynamic(this, &AEnemy::OnHit);
 }
 
 void AEnemy::PlayHitReactMontage(const FName& SectionName)
@@ -38,11 +40,6 @@ void AEnemy::PlayHitReactMontage(const FName& SectionName)
 		}
 	}
 } 
-
-void AEnemy::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
 
 void AEnemy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -77,12 +74,12 @@ FName AEnemy::GetHitReactSection(const FVector& ImpactPoint) const
 	return Section;
 }
 
-void AEnemy::Hit(const FVector& ImpactPoint)
+void AEnemy::OnHit(AActor* DamagedActor, float Damage, class AController* InstigatedBy, FVector HitLocation, class UPrimitiveComponent* FHitComponent, FName BoneName, FVector ShotFromDirection, const class UDamageType* DamageType, AActor* DamageCauser)
 {
-	PlayHitReactMontage(GetHitReactSection(ImpactPoint));
+	PlayHitReactMontage(GetHitReactSection(HitLocation));
 
 	if (HitSound)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, HitSound, ImpactPoint);
+		UGameplayStatics::PlaySoundAtLocation(this, HitSound, HitLocation);
 	}
 }

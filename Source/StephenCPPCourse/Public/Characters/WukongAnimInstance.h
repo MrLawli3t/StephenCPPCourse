@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
-#include "Characters/CharacterTypes.h"
+#include "Enums/MeleeStates.h"
 #include "WukongAnimInstance.generated.h"
 
 /**
@@ -32,5 +32,5 @@ public:
 	bool bIsFalling;
 
 	UPROPERTY(BlueprintReadOnly, Category="Movement | Character State")
-	ECharacterState CharacterState;
+	EEquipState EquipState;
 };

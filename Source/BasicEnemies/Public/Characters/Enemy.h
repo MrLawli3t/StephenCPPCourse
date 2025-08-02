@@ -4,23 +4,22 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Interfaces/Hittable.h"
 #include "Enemy.generated.h"
 
 class UAnimMontage;
 
 UCLASS()
-class BASICENEMIES_API AEnemy : public ACharacter, public IHittable
+class BASICENEMIES_API AEnemy : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
 	AEnemy();
-
-	virtual void Tick(float DeltaTime) override;
+	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	virtual void Hit(const FVector& ImpactPoint) override;
+	UFUNCTION()
+	void OnHit(AActor* DamagedActor, float Damage, class AController* InstigatedBy, FVector HitLocation, class UPrimitiveComponent* FHitComponent, FName BoneName, FVector ShotFromDirection, const class UDamageType* DamageType, AActor* DamageCauser);
 
 protected:
 	virtual void BeginPlay() override;

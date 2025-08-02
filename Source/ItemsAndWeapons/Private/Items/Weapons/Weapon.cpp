@@ -66,6 +66,8 @@ void AWeapon::BeginPlay()
 
 void AWeapon::AttackTrace()
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(WeaponAttackTrace);
+	
 	const FVector Start = StartTrace->GetComponentLocation();
 	const FVector End = EndTrace->GetComponentLocation();
 	TArray<AActor*> ActorsToIgnore = {Owner};

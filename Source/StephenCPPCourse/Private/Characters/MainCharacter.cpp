@@ -6,16 +6,15 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Camera/CameraComponent.h"
-#include "Components/BoxComponent.h"
+#include "Components/MeleeSystemComponent.h"
+#include "Enums/MeleeStates.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Interfaces/Hittable.h"
-#include "Items/Item.h"
 #include "Items/Weapons/Weapon.h"
 
 AMainCharacter::AMainCharacter()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -29,29 +28,27 @@ AMainCharacter::AMainCharacter()
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm);
+
+	MeleeSystemComponent = CreateDefaultSubobject<UMeleeSystemComponent>(TEXT("MeleeSystemComponent"));
+	MeleeSystemComponent->SetAutoActivate(true);
 }
 
 void AMainCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
-	{
-		AnimInstance->OnMontageEnded.AddDynamic(this, &AMainCharacter::EquipEnd);
-	}
 	
 }
 
 void AMainCharacter::Jump()
 {
-	if (ActionState == EActionState::EAS_Equipping) return;
+	if (MeleeSystemComponent->GetActionState() == EActionState::EAS_Equipping) return;
 	Super::Jump();
 }
 
 void AMainCharacter::Move(const FInputActionInstance& InputActionInstance)
 {
-	if (ActionState == EActionState::EAS_Attacking) return;
-	if (ActionState == EActionState::EAS_Equipping) return;
+	if (MeleeSystemComponent->GetActionState() == EActionState::EAS_Attacking) return;
+	if (MeleeSystemComponent->GetActionState() == EActionState::EAS_Equipping) return;
 	
 	const FVector2D InputVector = InputActionInstance.GetValue().Get<FVector2D>();
 	if ((Controller != nullptr) && (InputVector != FVector2D::ZeroVector))
@@ -77,120 +74,14 @@ void AMainCharacter::Turn(const FInputActionInstance& InputActionInstance)
 	}
 }
 
-void AMainCharacter::ToggleEquipped(const FInputActionInstance& InputActionInstance)
+void AMainCharacter::OnToggleEquipped(const FInputActionInstance& InputActionInstance)
 {
-	if (ActionState == EActionState::EAS_Attacking) return;
-
-	if (AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem))
-	{
-		OverlappingWeapon->Equip(GetMesh(), FName("hand_r_socket"));
-		EquippedWeapon = OverlappingWeapon;
-		EquippedWeapon->OnAttackHit.BindUObject(this, &AMainCharacter::AttackHit);
-		CharacterState = ECharacterState::ECS_EquippedOneHanded;
-	} else
-	{
-		if (CanArm())
-		{
-			PlayEquipDisarmMontage(FName("Equip"));
-		} else if (CanDisarm())
-		{
-			PlayEquipDisarmMontage(FName("Disarm"));
-		}
-	}
-	
+	MeleeSystemComponent->ToggleEquipped();
 }
 
-void AMainCharacter::Attack(const FInputActionInstance& InputActionInstance)
+void AMainCharacter::OnAttack(const FInputActionInstance& InputActionInstance)
 {
-	if (CanAttack())
-	{
-		EquippedWeapon->StartAttackTrace();
-		PlayAttackMontage();
-	}
-}
-
-void AMainCharacter::PlayAttackMontage()
-{
-	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance()) {
-		if (UAnimMontage* AttackMontage = EquippedWeapon->GetAttackMontage())
-		{
-			ActionState = EActionState::EAS_Attacking;
-			AnimInstance->Montage_Play(AttackMontage);
-			const unsigned short Section = FMath::RandRange(1,3);
-			AnimInstance->Montage_JumpToSection(FName("Attack" + FString::FromInt(Section)), AttackMontage);
-		}
-	}
-}
-
-void AMainCharacter::PlayEquipDisarmMontage(const FName& SectionName)
-{
-	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance()) {
-		if (EquipDisarmMontage)
-		{
-			ActionState = EActionState::EAS_Equipping;
-			AnimInstance->Montage_Play(EquipDisarmMontage);
-			AnimInstance->Montage_JumpToSection(SectionName, EquipDisarmMontage);
-		}
-	}
-}
-
-bool AMainCharacter::CanDisarm() const
-{
-	return CharacterState == ECharacterState::ECS_EquippedOneHanded && EquippedWeapon;
-}
-
-bool AMainCharacter::CanArm() const
-{
-	return CharacterState == ECharacterState::ECS_Unequipped && EquippedWeapon;
-}
-
-bool AMainCharacter::CanAttack() const
-{
-	return ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped && EquippedWeapon;
-}
-
-void AMainCharacter::AttackEnd()
-{
-	ActionState = EActionState::EAS_Unoccupied;
-	if (EquippedWeapon)
-	{
-		EquippedWeapon->StopAttackTrace();
-	}
-}
-
-void AMainCharacter::AttackHit(FHitResult HitResult)
-{
-	if (HitResult.GetActor())
-	{
-		if (IHittable* Hittable = Cast<IHittable>(HitResult.GetActor()))
-		{
-			Hittable->Hit(HitResult.ImpactPoint);
-		}
-	}
-}
-
-void AMainCharacter::Arm()
-{
-	if (!EquippedWeapon) return;
-
-	CharacterState = ECharacterState::ECS_EquippedOneHanded;
-	EquippedWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), FName("hand_r_socket"));
-}
-
-void AMainCharacter::Disarm()
-{
-	if (!EquippedWeapon) return;
-	
-	CharacterState = ECharacterState::ECS_Unequipped;
-	EquippedWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), FName("weapon_back_socket"));
-}
-
-void AMainCharacter::EquipEnd(UAnimMontage* Montage, bool bInterrupted)
-{
-	if (Montage == EquipDisarmMontage)
-	{
-		ActionState = EActionState::EAS_Unoccupied;
-	}
+	MeleeSystemComponent->Attack();
 }
 
 void AMainCharacter::Tick(float DeltaTime)
@@ -215,17 +106,30 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		Input->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AMainCharacter::Move);
 		Input->BindAction(TurnAction, ETriggerEvent::Triggered, this, &AMainCharacter::Turn);
 		Input->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AMainCharacter::Jump);
-		Input->BindAction(EquipAction, ETriggerEvent::Started, this, &AMainCharacter::ToggleEquipped);
-		Input->BindAction(AttackAction, ETriggerEvent::Started, this, &AMainCharacter::Attack);
+		Input->BindAction(EquipAction, ETriggerEvent::Started, this, &AMainCharacter::OnToggleEquipped);
+		Input->BindAction(AttackAction, ETriggerEvent::Started, this, &AMainCharacter::OnAttack);
 	}
 }
 
-void AMainCharacter::StartAttackTrace()
+void AMainCharacter::PlayAttackMontage()
 {
-	if (EquippedWeapon) EquippedWeapon->StartAttackTrace();
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance()) {
+		if (UAnimMontage* AttackMontage = MeleeSystemComponent->GetEquippedWeapon()->GetAttackMontage())
+		{
+			AnimInstance->Montage_Play(AttackMontage);
+			const unsigned short Section = FMath::RandRange(1,3);
+			AnimInstance->Montage_JumpToSection(FName("Attack" + FString::FromInt(Section)), AttackMontage);
+		}
+	}
 }
 
-void AMainCharacter::StopAttackTrace()
+void AMainCharacter::PlayEquipDisarmMontage(const FName& SectionName)
 {
-	if (EquippedWeapon) EquippedWeapon->StopAttackTrace();
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance()) {
+		if (EquipDisarmMontage)
+		{
+			AnimInstance->Montage_Play(EquipDisarmMontage);
+			AnimInstance->Montage_JumpToSection(SectionName, EquipDisarmMontage);
+		}
+	}
 }
