@@ -9,7 +9,7 @@ public class ItemsAndWeapons : ModuleRules
         PublicDependencyModuleNames.AddRange(
             new string[]
             {
-                "Core",
+                "Core"
             }
         );
 
@@ -17,7 +17,9 @@ public class ItemsAndWeapons : ModuleRules
             new string[]
             {
                 "CoreUObject",
-                "Engine"
+                "Engine",
+                "FieldSystemEngine",
+                "GeometryCollectionEngine"
             }
         );
     }

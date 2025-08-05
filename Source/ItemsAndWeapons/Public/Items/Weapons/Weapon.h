@@ -6,6 +6,7 @@
 #include "Items/Item.h"
 #include "Weapon.generated.h"
 
+class UBoxComponent;
 class IWeaponInteractor;
 
 /**
@@ -23,37 +24,32 @@ public:
 	AWeapon();
 	
 	void Equip(USkeletalMeshComponent* Mesh, FName SocketName);
-	void StartAttackTrace();
 	void StopAttackTrace();
+	void AttackTrace();
 	
 	FOnAttackHitSignature OnAttackHit;
 protected:
 	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
-	
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void CreateFields(const FVector& Location);
 private:
 	virtual void BeginPlay() override;
-
-	void AttackTrace();
 	
 	UPROPERTY(EditDefaultsOnly, Category="Animation")
 	TObjectPtr<UAnimMontage> AttackMontage;
 
-	UPROPERTY(VisibleAnywhere, Category="Attack")
-	TObjectPtr<USceneComponent> StartTrace;
+	UPROPERTY(VisibleDefaultsOnly, Category="Attack")
+	TObjectPtr<USceneComponent> StartTracePos;
 
-	UPROPERTY(VisibleAnywhere, Category="Attack")
-	TObjectPtr<USceneComponent> EndTrace;
-
-	UPROPERTY(EditDefaultsOnly, Category="Attack")
-	FVector HalfSize = FVector(5.f, 5.f, 5.f);
-
-	FTimerHandle AttackTraceTimer;
+	UPROPERTY(VisibleDefaultsOnly, Category="Attack")
+	TObjectPtr<USceneComponent> EndTracePos;
+	
+	UPROPERTY(VisibleDefaultsOnly, Category="Attack")
+	TObjectPtr<UBoxComponent> TraceBox;
 
 	TArray<AActor*> HitActors;
-
-	UPROPERTY(EditDefaultsOnly, Category="Attack")
-	float TraceDelay = 0.01f;
 
 public:
 	FORCEINLINE UAnimMontage* GetAttackMontage() const {return AttackMontage;};

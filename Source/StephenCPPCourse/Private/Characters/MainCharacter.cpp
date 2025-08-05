@@ -10,7 +10,6 @@
 #include "Enums/MeleeStates.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Items/Weapons/Weapon.h"
 
 AMainCharacter::AMainCharacter()
 {

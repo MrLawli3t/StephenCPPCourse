@@ -6,6 +6,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystem.h"
 
 
 AEnemy::AEnemy()
@@ -56,7 +57,7 @@ FName AEnemy::GetHitReactSection(const FVector& ImpactPoint) const
 
 	const FVector CrossProduct = FVector::CrossProduct(Forward, ToImpact);
 	
-	UKismetSystemLibrary::DrawDebugLine(this, GetActorLocation(), GetActorLocation() + CrossProduct * 100.f, FColor::Blue, 10.f, 1.f);
+	//UKismetSystemLibrary::DrawDebugLine(this, GetActorLocation(), GetActorLocation() + CrossProduct * 100.f, FColor::Blue, 10.f, 1.f);
 	
 	if (CrossProduct.Z < 0.f) Theta *= -1.f;
 
@@ -81,5 +82,13 @@ void AEnemy::OnHit(AActor* DamagedActor, float Damage, class AController* Instig
 	if (HitSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, HitSound, HitLocation);
+	}
+	if (HitParticles)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(
+			this,
+			HitParticles,
+			HitLocation
+		);
 	}
 }

@@ -22,8 +22,6 @@ public:
 	// Sets default values for this component's properties
 	UMeleeSystemComponent();
 	
-	void StartAttackTrace();
-	void StopAttackTrace();
 	void EquipEnd();
 	void Arm();
 	void Disarm();

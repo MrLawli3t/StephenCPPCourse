@@ -55,7 +55,6 @@ void UMeleeSystemComponent::Attack()
 {
 	if (CanAttack())
 	{
-		EquippedWeapon->StartAttackTrace();
 		ActionState = EActionState::EAS_Attacking;
 		OwningActor->PlayMontageAtSection(EquippedWeapon->GetAttackMontage(), FName("Attack" + FString::FromInt(ComboIndex+1)));
 		ComboIndex = (ComboIndex + 1) % 3;
@@ -118,14 +117,4 @@ void UMeleeSystemComponent::Disarm()
 void UMeleeSystemComponent::EquipEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
-}
-
-void UMeleeSystemComponent::StartAttackTrace()
-{
-	if (EquippedWeapon) EquippedWeapon->StartAttackTrace();
-}
-
-void UMeleeSystemComponent::StopAttackTrace()
-{
-	if (EquippedWeapon) EquippedWeapon->StopAttackTrace();
 }

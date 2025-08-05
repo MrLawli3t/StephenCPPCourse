@@ -2,16 +2,21 @@
 
 
 #include "Items/Weapons/Weapon.h"
+
+#include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 AWeapon::AWeapon()
 {
-	StartTrace = CreateDefaultSubobject<USceneComponent>(TEXT("StartTrace"));
-	StartTrace->SetupAttachment(GetRootComponent());
-
-	EndTrace = CreateDefaultSubobject<USceneComponent>(TEXT("EndTrace"));
-	EndTrace->SetupAttachment(GetRootComponent());
+	StartTracePos = CreateDefaultSubobject<USceneComponent>(TEXT("StartTracePos"));
+	StartTracePos->SetupAttachment(GetRootComponent());
+	
+	EndTracePos = CreateDefaultSubobject<USceneComponent>(TEXT("EndTracePos"));
+	EndTracePos->SetupAttachment(GetRootComponent());
+	
+	TraceBox = CreateDefaultSubobject<UBoxComponent>(TEXT("TraceBox"));
+	TraceBox->SetupAttachment(GetRootComponent());
 
 	HitActors.Reserve(8);
 }
@@ -26,24 +31,8 @@ void AWeapon::Equip(USkeletalMeshComponent* Mesh, FName SocketName)
 	AttachToComponent(Mesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), SocketName);
 }
 
-void AWeapon::StartAttackTrace()
-{
-	if (AttackTraceTimer.IsValid()) GetWorldTimerManager().UnPauseTimer(AttackTraceTimer);
-	else
-	{
-		GetWorldTimerManager().SetTimer(
-		AttackTraceTimer,
-		this,
-		&AWeapon::AttackTrace,
-		TraceDelay,
-		true
-	);
-	}
-}
-
 void AWeapon::StopAttackTrace()
 {
-	GetWorldTimerManager().PauseTimer(AttackTraceTimer);
 	HitActors.Empty();
 }
 
@@ -62,14 +51,18 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
+
+	
 }
 
 void AWeapon::AttackTrace()
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(WeaponAttackTrace);
+
+	const FVector Start = StartTracePos->GetComponentLocation();
+	const FVector End = EndTracePos->GetComponentLocation();	
+	const FVector HalfSize = TraceBox->GetScaledBoxExtent();
 	
-	const FVector Start = StartTrace->GetComponentLocation();
-	const FVector End = EndTrace->GetComponentLocation();
 	TArray<AActor*> ActorsToIgnore = {Owner};
 
 	for (AActor* HitActor : HitActors)
@@ -84,11 +77,11 @@ void AWeapon::AttackTrace()
 		Start,
 		End,
 		HalfSize,
-		StartTrace->GetComponentRotation(),
+		StartTracePos->GetComponentRotation(),
 		ETraceTypeQuery::TraceTypeQuery1,
 		false,
 		ActorsToIgnore,
-		EDrawDebugTrace::ForDuration,
+		EDrawDebugTrace::None,
 		HitResult,
 		true,
 		FLinearColor::Red,
@@ -98,5 +91,6 @@ void AWeapon::AttackTrace()
 	{
 		OnAttackHit.ExecuteIfBound(HitResult);
 		HitActors.AddUnique(HitResult.GetActor());
+		CreateFields(HitResult.ImpactPoint);
 	}
 }
