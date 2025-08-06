@@ -29,7 +29,6 @@ ABreakableActor::ABreakableActor()
 void ABreakableActor::BeginPlay()
 {
 	Super::BeginPlay();
-	GeometryCollectionComponent->ApplyBreakingLinearVelocity(0, FVector(0,0,1000));
 	GeometryCollectionComponent->OnChaosBreakEvent.AddDynamic(this, &ABreakableActor::OnBreak);
 }
 
@@ -41,12 +40,17 @@ void ABreakableActor::OnBreak(const FChaosBreakEvent& BreakEvent)
 		return;
 	}
 	if (bIsBroken) return;
+	if (!GetWorld()) return;
+	if (TreasureClasses.Num() == 0) return;
 
 	CapsuleComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	
-	UGameplayStatics::PlaySoundAtLocation(this, BreakSound, GetActorLocation());
-	GetWorld()->SpawnActor<ATreasure>(TreasureClass, GetActorLocation() + FVector(0, 0, 75), GetActorRotation());
-	SetLifeSpan(5);
+	UGameplayStatics::PlaySoundAtLocation(this, BreakSound, GeometryCollectionComponent->GetComponentLocation());
+
+	const TSubclassOf<ATreasure> TreasureClass = TreasureClasses[FMath::RandRange(0, TreasureClasses.Num() - 1)];
+	GetWorld()->SpawnActor<ATreasure>(TreasureClass, GeometryCollectionComponent->GetComponentLocation() + FVector(0, 0, 25), FRotator::ZeroRotator);
+	
+	SetLifeSpan(3);
 	bIsBroken = true;
 }
 

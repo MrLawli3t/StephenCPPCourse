@@ -5,6 +5,7 @@
 #include "Components/MeleeSystemComponent.h"
 #include "Components/SphereComponent.h"
 #include "Interfaces/MeleeActor.h"
+#include "NiagaraComponent.h"
 
 // Sets default values
 AItem::AItem()
@@ -16,7 +17,10 @@ AItem::AItem()
 	SetRootComponent(ItemMesh);
 
 	SphereComponent = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComponent"));
-	SphereComponent->SetupAttachment(ItemMesh);
+	SphereComponent->SetupAttachment(GetRootComponent());
+
+	EmberParticles = CreateDefaultSubobject<UNiagaraComponent>(TEXT("EmberParticles"));
+	EmberParticles->SetupAttachment(GetRootComponent());
 }
 
 // Called when the game starts or when spawned

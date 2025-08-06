@@ -3,6 +3,7 @@
 
 #include "Items/Weapons/Weapon.h"
 
+#include "NiagaraComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -26,6 +27,8 @@ void AWeapon::Equip(USkeletalMeshComponent* Mesh, FName SocketName)
 	SetItemState(EItemState::EIS_Equipped);
 	GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetSphereComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	EmberParticles->Deactivate();
 	
 	SetActorTickEnabled(false);
 	AttachToComponent(Mesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), SocketName);

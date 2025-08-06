@@ -9,7 +9,14 @@
 
 ATreasure::ATreasure()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
+}
+
+void ATreasure::Tick(const float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+
+	AddActorWorldRotation(TreasureRotation * DeltaSeconds);
 }
 
 // Called when the game starts or when spawned

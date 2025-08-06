@@ -19,7 +19,8 @@ public class ItemsAndWeapons : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "FieldSystemEngine",
-                "GeometryCollectionEngine"
+                "GeometryCollectionEngine",
+                "Niagara"
             }
         );
     }

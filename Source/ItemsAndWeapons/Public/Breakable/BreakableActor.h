@@ -32,11 +32,11 @@ private:
 	UFUNCTION()
 	void OnBreak(const FChaosBreakEvent& BreakEvent);
 
-	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
+	UPROPERTY(EditAnywhere, Category = "Breaking Properties")
 	TObjectPtr<USoundBase> BreakSound;
 
-	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
-	TSubclassOf<class ATreasure> TreasureClass;
+	UPROPERTY(EditAnywhere, Category = "Breaking Properties")
+	TArray<TSubclassOf<class ATreasure>> TreasureClasses;
 	
 	bool bIsBroken = false;
 

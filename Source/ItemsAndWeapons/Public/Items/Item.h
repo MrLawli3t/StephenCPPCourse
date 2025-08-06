@@ -7,6 +7,7 @@
 #include "Item.generated.h"
 
 class USphereComponent;
+class UNiagaraComponent;
 
 enum class EItemState : uint8
 {
@@ -35,6 +36,8 @@ protected:
 	UFUNCTION()
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	UPROPERTY(EditAnywhere, Category = "VFX")
+	TObjectPtr<UNiagaraComponent> EmberParticles;
 private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UStaticMeshComponent> ItemMesh;
@@ -43,8 +46,12 @@ private:
 	TObjectPtr<USphereComponent> SphereComponent;
 	
 	float RunningTime = 0;
-	float Amplitude = 0.5f;
-	float Frequency = 1.5f;
+
+	UPROPERTY(EditAnywhere, Category="Hover Properties")
+	float Amplitude = 0.2f;
+
+	UPROPERTY(EditAnywhere, Category="Hover Properties")
+	float Frequency = 2.f;
 	
 	EItemState ItemState = EItemState::EIS_Hovering;
 
