@@ -7,6 +7,7 @@
 #include "Physics/Experimental/ChaosEventType.h"
 #include "BreakableActor.generated.h"
 
+class UCapsuleComponent;
 class UGeometryCollectionComponent;
 
 UCLASS()
@@ -21,6 +22,9 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UCapsuleComponent> CapsuleComponent;
+
 private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UGeometryCollectionComponent> GeometryCollectionComponent;
@@ -31,6 +35,9 @@ private:
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
 	TObjectPtr<USoundBase> BreakSound;
 
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
+	TSubclassOf<class ATreasure> TreasureClass;
+	
 	bool bIsBroken = false;
 
 public:

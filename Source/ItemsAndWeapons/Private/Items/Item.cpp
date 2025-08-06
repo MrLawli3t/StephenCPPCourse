@@ -31,18 +31,18 @@ void AItem::BeginPlay()
 void AItem::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (const IMeleeActor* Interactor = Cast<IMeleeActor>(OtherActor))
+	if (const IMeleeActor* MeleeActor = Cast<IMeleeActor>(OtherActor))
 	{
-		Interactor->GetMeleeSystemComponent()->SetOverlappingItem(this);
+		MeleeActor->GetMeleeSystemComponent()->SetOverlappingItem(this);
 	}
 }
 
 void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
 	int32 OtherBodyIndex)
 {
-	if (const IMeleeActor* Interactor = Cast<IMeleeActor>(OtherActor))
+	if (const IMeleeActor* MeleeActor = Cast<IMeleeActor>(OtherActor))
 	{
-		Interactor->GetMeleeSystemComponent()->SetOverlappingItem(nullptr);
+		MeleeActor->GetMeleeSystemComponent()->SetOverlappingItem(nullptr);
 	}
 }
 
