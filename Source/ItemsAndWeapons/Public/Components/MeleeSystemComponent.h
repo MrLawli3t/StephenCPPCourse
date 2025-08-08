@@ -8,12 +8,15 @@
 #include "Enums/MeleeStates.h"
 #include "MeleeSystemComponent.generated.h"
 
-
-class IMeleeActor;
 class AWeapon;
 class AItem;
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+DECLARE_DELEGATE_OneParam(FOnArmDisarmSignature, bool bDoArm);
+DECLARE_DELEGATE_OneParam(FOnEquipUnequip, bool bDoEquip);
+DECLARE_DELEGATE_OneParam(FOnAttackSignature, int32 AttackIndex);
+DECLARE_DELEGATE_OneParam(FOnFirstEquipSingature, AWeapon* OverlappingWeapon);
+
+UCLASS(ClassGroup=(Pawn), meta=(BlueprintSpawnableComponent))
 class ITEMSANDWEAPONS_API UMeleeSystemComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -30,6 +33,12 @@ public:
 	void ToggleEquipped();
 	void Attack();
 	
+	// Necessary pointers checked before broadcast 
+	FOnArmDisarmSignature OnArmDisarm;
+	FOnEquipUnequip OnEquipUnequip;
+	FOnAttackSignature OnAttack;
+	FOnFirstEquipSingature OnFirstEquip;
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -45,8 +54,9 @@ private:
 	
 	UPROPERTY(VisibleInstanceOnly, Category="Item")
 	TObjectPtr<AWeapon> EquippedWeapon;
-	
-	IMeleeActor* OwningActor = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<APawn> OwningPawn;
 	
 	FPointDamageEvent DamageEvent;
 
@@ -62,5 +72,5 @@ public:
 	FORCEINLINE EEquipState GetEquipState() const {return EquipState;}
 	FORCEINLINE void SetCanContinueCombo(const bool CanContinue) {bCanContinueCombo = CanContinue;}
 	FORCEINLINE AWeapon* GetEquippedWeapon() const {return EquippedWeapon;}
-	FORCEINLINE USkeletalMeshComponent* GetMesh() const;
+	FORCEINLINE AItem* GetOverlappingItem() const {return OverlappingItem;}
 };

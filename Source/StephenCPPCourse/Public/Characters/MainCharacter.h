@@ -7,6 +7,7 @@
 #include "Interfaces/MeleeActor.h"
 #include "MainCharacter.generated.h"
 
+class AWeapon;
 class UMeleeSystemComponent;
 class UCameraComponent;
 class USpringArmComponent;
@@ -56,6 +57,10 @@ private:
 	void Turn(const FInputActionInstance& InputActionInstance);
 	void OnToggleEquipped(const FInputActionInstance& InputActionInstance);
 	void OnAttack(const FInputActionInstance& InputActionInstance);
+	void ArmDisarm(const bool bDoArm);
+	void StartArmDisarmAnim(const bool bDoEquip);
+	void AttackAnim(const int32 AttackIndex);
+	void FirstEquipAnim(AWeapon* OverlappingWeapon);
 
 	UPROPERTY(EditDefaultsOnly, Category="Animation")
 	TObjectPtr<UAnimMontage> EquipDisarmMontage;
@@ -71,8 +76,4 @@ private:
 
 public:
 	FORCEINLINE virtual UMeleeSystemComponent* GetMeleeSystemComponent() const override {return MeleeSystemComponent;}
-	FORCEINLINE virtual USkeletalMeshComponent* IGetMesh() const override {return GetMesh();}
-	FORCEINLINE virtual AController* IGetController() const override {return Controller;}
-	FORCEINLINE virtual AActor* GetActor() override {return this;}
-	FORCEINLINE virtual UAnimMontage* GetEquipDisarmMontage() const override {return EquipDisarmMontage;}
 };

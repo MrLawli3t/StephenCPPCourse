@@ -3,23 +3,18 @@
 
 #include "Items/Weapons/Weapon.h"
 
+#include "KismetTraceUtils.h"
 #include "NiagaraComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 AWeapon::AWeapon()
-{
-	StartTracePos = CreateDefaultSubobject<USceneComponent>(TEXT("StartTracePos"));
-	StartTracePos->SetupAttachment(GetRootComponent());
-	
-	EndTracePos = CreateDefaultSubobject<USceneComponent>(TEXT("EndTracePos"));
-	EndTracePos->SetupAttachment(GetRootComponent());
-	
+{	
 	TraceBox = CreateDefaultSubobject<UBoxComponent>(TEXT("TraceBox"));
 	TraceBox->SetupAttachment(GetRootComponent());
 
-	HitActors.Reserve(8);
+	HitActors.Reserve(10);
 }
 
 void AWeapon::Equip(USkeletalMeshComponent* Mesh, FName SocketName)
@@ -37,6 +32,7 @@ void AWeapon::Equip(USkeletalMeshComponent* Mesh, FName SocketName)
 void AWeapon::StopAttackTrace()
 {
 	HitActors.Empty();
+	PreviousTraceLocation = FVector::ZeroVector;
 }
 
 void AWeapon::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
@@ -62,38 +58,38 @@ void AWeapon::AttackTrace()
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(WeaponAttackTrace);
 
-	const FVector Start = StartTracePos->GetComponentLocation();
-	const FVector End = EndTracePos->GetComponentLocation();	
-	const FVector HalfSize = TraceBox->GetScaledBoxExtent();
-	
-	TArray<AActor*> ActorsToIgnore = {Owner};
+	const FVector CurrentTraceLocation = TraceBox->GetComponentLocation();
 
-	for (AActor* HitActor : HitActors)
-	{
-		ActorsToIgnore.Add(HitActor);
-	}
-	
-	FHitResult HitResult;
-	
-	if (UKismetSystemLibrary::BoxTraceSingle(
-		this,
-		Start,
-		End,
-		HalfSize,
-		StartTracePos->GetComponentRotation(),
-		ETraceTypeQuery::TraceTypeQuery1,
-		false,
-		ActorsToIgnore,
-		EDrawDebugTrace::None,
-		HitResult,
-		true,
-		FLinearColor::Red,
-		FLinearColor::Green,
-		1.f
+	if (PreviousTraceLocation.IsZero()) PreviousTraceLocation = CurrentTraceLocation;
+
+	TArray<FHitResult> HitResults;
+
+	FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(WeaponTrace), false);
+	QueryParams.AddIgnoredActors(TArray<AActor*>({this, GetAttachParentActor()}));
+
+	DrawDebugLine(GetWorld(), PreviousTraceLocation, CurrentTraceLocation, FColor(255, 0, 0, 100), false, 1.f, 0, 50.f);
+	if (GetWorld()->SweepMultiByChannel(
+		HitResults,
+		PreviousTraceLocation,
+		CurrentTraceLocation,
+		TraceBox->GetComponentQuat(),
+		ECollisionChannel::ECC_GameTraceChannel1,
+		FCollisionShape::MakeBox(TraceBox->GetScaledBoxExtent()),
+		QueryParams
 	))
 	{
-		OnAttackHit.ExecuteIfBound(HitResult);
-		HitActors.AddUnique(HitResult.GetActor());
-		CreateFields(HitResult.ImpactPoint);
+		for (const FHitResult HitResult : HitResults)
+		{
+			const AActor* HitActor = HitResult.GetActor();
+			if (HitActor && !HitActors.Contains(HitActor))
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, HitActor->GetName());
+				OnAttackHit.ExecuteIfBound(HitResult);
+				HitActors.Add(HitResult.GetActor());
+				CreateFields(HitResult.ImpactPoint);
+			}
+		}
 	}
+
+	PreviousTraceLocation = CurrentTraceLocation;
 }

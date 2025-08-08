@@ -3,7 +3,6 @@
 
 #include "Components/MeleeSystemComponent.h"
 
-#include "Interfaces/MeleeActor.h"
 #include "Items/Weapons/Weapon.h"
 
 
@@ -17,11 +16,12 @@ void UMeleeSystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (IMeleeActor* Actor = Cast<IMeleeActor>(GetOwner()))
-	{
-		OwningActor = Actor;
-	}
+	OwningPawn = Cast<APawn>(GetOwner());
 	
+	if (!OwningPawn)
+	{
+		UE_LOG(LogTemp, Fatal, TEXT("UMeleeSystemComponent can only be used on Pawns!"));
+	}
 }
 
 void UMeleeSystemComponent::ToggleEquipped()
@@ -30,9 +30,8 @@ void UMeleeSystemComponent::ToggleEquipped()
 
 	if (AWeapon* OverlappingWeapon = Cast<AWeapon>(OverlappingItem))
 	{
-		if (!GetMesh()) return;
+		OnFirstEquip.ExecuteIfBound(OverlappingWeapon);
 		
-		OverlappingWeapon->Equip(GetMesh(), FName("hand_r_socket"));
 		EquippedWeapon = OverlappingWeapon;
 		EquippedWeapon->OnAttackHit.BindUObject(this, &UMeleeSystemComponent::AttackHit);
 		EquipState = EEquipState::ECS_EquippedOneHanded;
@@ -41,11 +40,11 @@ void UMeleeSystemComponent::ToggleEquipped()
 		if (CanArm())
 		{
 			ActionState = EActionState::EAS_Equipping;
-			OwningActor->PlayMontageAtSection(OwningActor->GetEquipDisarmMontage(), FName("Equip"));
+			OnEquipUnequip.ExecuteIfBound(true);
 		} else if (CanDisarm())
 		{
 			ActionState = EActionState::EAS_Equipping;
-			OwningActor->PlayMontageAtSection(OwningActor->GetEquipDisarmMontage(), (FName("Disarm")));
+			OnEquipUnequip.ExecuteIfBound(false);
 		}
 	}
 	
@@ -56,7 +55,7 @@ void UMeleeSystemComponent::Attack()
 	if (CanAttack())
 	{
 		ActionState = EActionState::EAS_Attacking;
-		OwningActor->PlayMontageAtSection(EquippedWeapon->GetAttackMontage(), FName("Attack" + FString::FromInt(ComboIndex+1)));
+		OnAttack.ExecuteIfBound(ComboIndex);
 		ComboIndex = (ComboIndex + 1) % 3;
 	}
 }
@@ -85,17 +84,11 @@ void UMeleeSystemComponent::AttackHit(FHitResult HitResult)
 {
 	if (HitResult.GetActor())
 	{
-		if (!OwningActor) return;
+		if (!OwningPawn) return;
 		DamageEvent.HitInfo = HitResult;
 		DamageEvent.Damage = 10.f;
-		HitResult.GetActor()->TakeDamage(10.f, DamageEvent, OwningActor->IGetController(), OwningActor->GetActor());
+		HitResult.GetActor()->TakeDamage(10.f, DamageEvent, OwningPawn->GetController(), OwningPawn);
 	}
-}
-
-USkeletalMeshComponent* UMeleeSystemComponent::GetMesh() const
-{
-	if (OwningActor && OwningActor->IGetMesh()) return OwningActor->IGetMesh();
-	return nullptr;
 }
 
 void UMeleeSystemComponent::Arm()
@@ -103,7 +96,7 @@ void UMeleeSystemComponent::Arm()
 	if (!EquippedWeapon) return;
 
 	EquipState = EEquipState::ECS_EquippedOneHanded;
-	EquippedWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), FName("hand_r_socket"));
+	OnArmDisarm.ExecuteIfBound(true);
 }
 
 void UMeleeSystemComponent::Disarm()
@@ -111,7 +104,7 @@ void UMeleeSystemComponent::Disarm()
 	if (!EquippedWeapon) return;
 	
 	EquipState = EEquipState::ECS_Unequipped;
-	EquippedWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), FName("weapon_back_socket"));
+	OnArmDisarm.ExecuteIfBound(false);
 }
 
 void UMeleeSystemComponent::EquipEnd()

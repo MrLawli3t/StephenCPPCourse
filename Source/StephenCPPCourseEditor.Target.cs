@@ -16,6 +16,6 @@ public class StephenCPPCourseEditorTarget : TargetRules
 
 	private void RegisterModulesCreatedByRider()
 	{
-		ExtraModuleNames.AddRange(new string[] { "ItemsAndWeapons", "BasicEnemies" });
+		ExtraModuleNames.AddRange(new string[] { "ItemsAndWeapons", "BasicEnemies", "BasicCharacters" });
 	}
 }

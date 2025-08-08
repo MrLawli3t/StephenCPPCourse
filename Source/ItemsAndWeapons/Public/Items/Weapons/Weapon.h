@@ -39,17 +39,13 @@ private:
 	
 	UPROPERTY(EditDefaultsOnly, Category="Animation")
 	TObjectPtr<UAnimMontage> AttackMontage;
-
-	UPROPERTY(VisibleDefaultsOnly, Category="Attack")
-	TObjectPtr<USceneComponent> StartTracePos;
-
-	UPROPERTY(VisibleDefaultsOnly, Category="Attack")
-	TObjectPtr<USceneComponent> EndTracePos;
 	
 	UPROPERTY(VisibleDefaultsOnly, Category="Attack")
 	TObjectPtr<UBoxComponent> TraceBox;
 
-	TArray<AActor*> HitActors;
+	FVector PreviousTraceLocation = FVector::ZeroVector;
+	
+	TSet<AActor*> HitActors;
 
 public:
 	FORCEINLINE UAnimMontage* GetAttackMontage() const {return AttackMontage;};

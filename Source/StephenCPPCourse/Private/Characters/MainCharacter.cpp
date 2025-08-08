@@ -10,6 +10,7 @@
 #include "Enums/MeleeStates.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Items/Weapons/Weapon.h"
 
 AMainCharacter::AMainCharacter()
 {
@@ -36,6 +37,10 @@ void AMainCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	MeleeSystemComponent->OnArmDisarm.BindUObject(this, &AMainCharacter::ArmDisarm);
+	MeleeSystemComponent->OnEquipUnequip.BindUObject(this, &AMainCharacter::ArmDisarm);
+	MeleeSystemComponent->OnAttack.BindUObject(this, &AMainCharacter::AttackAnim);
+	MeleeSystemComponent->OnFirstEquip.BindUObject(this, &AMainCharacter::FirstEquipAnim);
 }
 
 void AMainCharacter::Jump()
@@ -81,6 +86,38 @@ void AMainCharacter::OnToggleEquipped(const FInputActionInstance& InputActionIns
 void AMainCharacter::OnAttack(const FInputActionInstance& InputActionInstance)
 {
 	MeleeSystemComponent->Attack();
+}
+
+void AMainCharacter::ArmDisarm(const bool bDoArm)
+{
+	if (bDoArm)
+		MeleeSystemComponent->GetEquippedWeapon()->AttachToComponent(
+			GetMesh(),
+			FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true),
+			FName("hand_r_socket"));
+	else
+		MeleeSystemComponent->GetEquippedWeapon()->AttachToComponent(
+			GetMesh(),
+			FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true),
+			FName("weapon_back_socket"));
+}
+
+void AMainCharacter::StartArmDisarmAnim(const bool bDoEquip)
+{
+	if (bDoEquip)
+		PlayMontageAtSection(EquipDisarmMontage, FName("Equip"));
+	else
+		PlayMontageAtSection(EquipDisarmMontage, (FName("Disarm")));
+}
+
+void AMainCharacter::AttackAnim(const int32 AttackIndex)
+{
+	PlayMontageAtSection(MeleeSystemComponent->GetEquippedWeapon()->GetAttackMontage(), FName("Attack" + FString::FromInt(AttackIndex+1)));
+}
+
+void AMainCharacter::FirstEquipAnim(AWeapon* OverlappingWeapon)
+{
+	OverlappingWeapon->Equip(GetMesh(), FName("hand_r_socket"));
 }
 
 void AMainCharacter::Tick(float DeltaTime)
