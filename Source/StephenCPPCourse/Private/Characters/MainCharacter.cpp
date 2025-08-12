@@ -38,9 +38,8 @@ void AMainCharacter::BeginPlay()
 	Super::BeginPlay();
 	
 	MeleeSystemComponent->OnArmDisarm.BindUObject(this, &AMainCharacter::ArmDisarm);
-	MeleeSystemComponent->OnEquipUnequip.BindUObject(this, &AMainCharacter::ArmDisarm);
-	MeleeSystemComponent->OnAttack.BindUObject(this, &AMainCharacter::AttackAnim);
 	MeleeSystemComponent->OnFirstEquip.BindUObject(this, &AMainCharacter::FirstEquip);
+	MeleeSystemComponent->OnPlayMontageSection.BindUObject(this, &AMainCharacter::PlayMontageAtSection);
 
 	Tags.Add(FName("EnemyTarget"));
 }
@@ -102,19 +101,6 @@ void AMainCharacter::ArmDisarm(const bool bDoArm)
 			GetMesh(),
 			FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true),
 			FName("weapon_back_socket"));
-}
-
-void AMainCharacter::StartArmDisarmAnim(const bool bDoEquip)
-{
-	if (bDoEquip)
-		PlayMontageAtSection(EquipDisarmMontage, FName("Equip"));
-	else
-		PlayMontageAtSection(EquipDisarmMontage, (FName("Disarm")));
-}
-
-void AMainCharacter::AttackAnim(const int32 AttackIndex)
-{
-	PlayMontageAtSection(MeleeSystemComponent->GetEquippedWeapon()->GetAttackMontage(), FName("Attack" + FString::FromInt(AttackIndex+1)));
 }
 
 void AMainCharacter::FirstEquip(AWeapon* OverlappingWeapon)

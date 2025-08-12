@@ -3,6 +3,7 @@
 
 #include "Components/MeleeSystemComponent.h"
 
+#include "Interfaces/MeleeActor.h"
 #include "Items/Weapons/Weapon.h"
 
 
@@ -16,11 +17,11 @@ void UMeleeSystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	OwningPawn = Cast<APawn>(GetOwner());
+	MeleeActor = Cast<IMeleeActor>(GetOwner());
 	
-	if (!OwningPawn)
+	if (!MeleeActor)
 	{
-		UE_LOG(LogTemp, Fatal, TEXT("UMeleeSystemComponent can only be used on Pawns!"));
+		UE_LOG(LogTemp, Fatal, TEXT("UMeleeSystemComponent can only be used on actors that implement IMeleeActor!"));
 	}
 }
 
@@ -39,11 +40,11 @@ void UMeleeSystemComponent::ToggleEquipped()
 		if (CanArm())
 		{
 			ActionState = EActionState::EAS_Equipping;
-			OnEquipUnequip.ExecuteIfBound(true);
+			OnPlayMontageSection.ExecuteIfBound(MeleeActor->GetEquipDisarmMontage(), FName("Equip"));
 		} else if (CanDisarm())
 		{
 			ActionState = EActionState::EAS_Equipping;
-			OnEquipUnequip.ExecuteIfBound(false);
+			OnPlayMontageSection.ExecuteIfBound(MeleeActor->GetEquipDisarmMontage(), FName("Disarm"));
 		}
 	}
 	
@@ -54,8 +55,12 @@ void UMeleeSystemComponent::Attack()
 	if (CanAttack())
 	{
 		ActionState = EActionState::EAS_Attacking;
-		OnAttack.ExecuteIfBound(ComboIndex);
-		ComboIndex = (ComboIndex + 1) % 3;
+		
+		UAnimMontage* AttackMontage = EquippedWeapon->GetAttackMontage();
+		if (!AttackMontage) return;
+		
+		OnPlayMontageSection.ExecuteIfBound(AttackMontage, AttackMontage->GetSectionName(ComboIndex));
+		ComboIndex = (ComboIndex + 1) % EquippedWeapon->GetAttackMontage()->GetNumSections();
 	}
 }
 

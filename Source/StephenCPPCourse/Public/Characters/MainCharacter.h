@@ -56,8 +56,6 @@ private:
 	void OnToggleEquipped(const FInputActionInstance& InputActionInstance);
 	void OnAttack(const FInputActionInstance& InputActionInstance);
 	void ArmDisarm(const bool bDoArm);
-	void StartArmDisarmAnim(const bool bDoEquip);
-	void AttackAnim(const int32 AttackIndex);
 	void FirstEquip(AWeapon* OverlappingWeapon);
 	void PlayMontageAtSection(UAnimMontage* Montage, FName Section);
 
@@ -75,4 +73,5 @@ private:
 
 public:
 	FORCEINLINE virtual UMeleeSystemComponent* GetMeleeSystemComponent() const override {return MeleeSystemComponent;}
+	FORCEINLINE virtual UAnimMontage* GetEquipDisarmMontage() const override {return EquipDisarmMontage;}
 };

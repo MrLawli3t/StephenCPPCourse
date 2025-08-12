@@ -8,6 +8,7 @@
 #include "Enums/MeleeStates.h"
 #include "MeleeSystemComponent.generated.h"
 
+class IMeleeActor;
 class AWeapon;
 class AItem;
 
@@ -15,6 +16,7 @@ DECLARE_DELEGATE_OneParam(FOnArmDisarmSignature, bool bDoArm);
 DECLARE_DELEGATE_OneParam(FOnEquipUnequip, bool bDoEquip);
 DECLARE_DELEGATE_OneParam(FOnAttackSignature, int32 AttackIndex);
 DECLARE_DELEGATE_OneParam(FOnFirstEquipSingature, AWeapon* OverlappingWeapon);
+DECLARE_DELEGATE_TwoParams(FOnPlayMontageSectionSignature, UAnimMontage* Montage, FName SectionName);
 
 UCLASS(ClassGroup=(Pawn), meta=(BlueprintSpawnableComponent))
 class ITEMSANDWEAPONS_API UMeleeSystemComponent : public UActorComponent
@@ -35,9 +37,9 @@ public:
 	
 	// Necessary pointers checked before broadcast 
 	FOnArmDisarmSignature OnArmDisarm;
-	FOnEquipUnequip OnEquipUnequip;
-	FOnAttackSignature OnAttack;
 	FOnFirstEquipSingature OnFirstEquip;
+
+	FOnPlayMontageSectionSignature OnPlayMontageSection;
 	
 protected:
 	virtual void BeginPlay() override;
@@ -53,8 +55,7 @@ private:
 	UPROPERTY(VisibleInstanceOnly, Category="Item")
 	TObjectPtr<AWeapon> EquippedWeapon;
 
-	UPROPERTY()
-	TObjectPtr<APawn> OwningPawn;
+	IMeleeActor* MeleeActor = nullptr;
 	
 	FPointDamageEvent DamageEvent;
 
