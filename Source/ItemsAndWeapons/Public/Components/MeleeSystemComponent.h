@@ -47,8 +47,6 @@ private:
 	bool CanArm() const;
 	bool CanAttack() const;
 
-	void AttackHit(FHitResult HitResult);
-
 	UPROPERTY(VisibleInstanceOnly, Category="Item")
 	TObjectPtr<AItem> OverlappingItem;
 	

@@ -40,7 +40,9 @@ void AMainCharacter::BeginPlay()
 	MeleeSystemComponent->OnArmDisarm.BindUObject(this, &AMainCharacter::ArmDisarm);
 	MeleeSystemComponent->OnEquipUnequip.BindUObject(this, &AMainCharacter::ArmDisarm);
 	MeleeSystemComponent->OnAttack.BindUObject(this, &AMainCharacter::AttackAnim);
-	MeleeSystemComponent->OnFirstEquip.BindUObject(this, &AMainCharacter::FirstEquipAnim);
+	MeleeSystemComponent->OnFirstEquip.BindUObject(this, &AMainCharacter::FirstEquip);
+
+	Tags.Add(FName("EnemyTarget"));
 }
 
 void AMainCharacter::Jump()
@@ -115,9 +117,9 @@ void AMainCharacter::AttackAnim(const int32 AttackIndex)
 	PlayMontageAtSection(MeleeSystemComponent->GetEquippedWeapon()->GetAttackMontage(), FName("Attack" + FString::FromInt(AttackIndex+1)));
 }
 
-void AMainCharacter::FirstEquipAnim(AWeapon* OverlappingWeapon)
+void AMainCharacter::FirstEquip(AWeapon* OverlappingWeapon)
 {
-	OverlappingWeapon->Equip(GetMesh(), FName("hand_r_socket"));
+	OverlappingWeapon->Equip(GetMesh(), FName("hand_r_socket"), this, this);
 }
 
 void AMainCharacter::Tick(float DeltaTime)

@@ -18,7 +18,8 @@ public class BasicEnemies : ModuleRules
             new string[]
             {
                 "CoreUObject",
-                "Engine"
+                "Engine", 
+                "AIModule"
             }
         );
     }

@@ -21,8 +21,13 @@ protected:
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Attributes")
-	float Health;
+	float Health = 100.f;
 
 	UPROPERTY(EditAnywhere, Category = "Attributes")
-	float MaxHealth;
+	float MaxHealth = 100.f;
+
+public:
+	FORCEINLINE void ReceiveDamage(const float Damage);
+	FORCEINLINE float GetHealthPercent() const {return Health / MaxHealth;}
+	FORCEINLINE bool IsAlive() const {return Health > 0.f;}
 };

@@ -23,11 +23,10 @@ class ITEMSANDWEAPONS_API AWeapon : public AItem
 public:
 	AWeapon();
 	
-	void Equip(USkeletalMeshComponent* Mesh, FName SocketName);
+	void Equip(USkeletalMeshComponent* Mesh, FName SocketName, AActor* NewOwner, APawn* NewInstigator);
 	void StopAttackTrace();
 	void AttackTrace();
-	
-	FOnAttackHitSignature OnAttackHit;
+
 protected:
 	virtual void OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) override;
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex) override;
@@ -46,6 +45,9 @@ private:
 	FVector PreviousTraceLocation = FVector::ZeroVector;
 	
 	TSet<AActor*> HitActors;
+
+	UPROPERTY(EditAnywhere, Category="Attack")
+	float BaseDamage = 10.f;
 
 public:
 	FORCEINLINE UAnimMontage* GetAttackMontage() const {return AttackMontage;};

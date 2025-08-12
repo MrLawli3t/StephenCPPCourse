@@ -7,6 +7,7 @@
 #include "NiagaraComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SphereComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 
 AWeapon::AWeapon()
@@ -17,8 +18,11 @@ AWeapon::AWeapon()
 	HitActors.Reserve(10);
 }
 
-void AWeapon::Equip(USkeletalMeshComponent* Mesh, FName SocketName)
+void AWeapon::Equip(USkeletalMeshComponent* Mesh, const FName SocketName, AActor* NewOwner, APawn* NewInstigator)
 {
+	SetOwner(NewOwner);
+	SetInstigator(NewInstigator);
+	
 	SetItemState(EItemState::EIS_Equipped);
 	GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetSphereComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -50,7 +54,6 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
-
 	
 }
 
@@ -80,11 +83,19 @@ void AWeapon::AttackTrace()
 	{
 		for (const FHitResult HitResult : HitResults)
 		{
-			const AActor* HitActor = HitResult.GetActor();
+			AActor* HitActor = HitResult.GetActor();
 			if (HitActor && !HitActors.Contains(HitActor))
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, HitActor->GetName());
-				OnAttackHit.ExecuteIfBound(HitResult);
+				UGameplayStatics::ApplyPointDamage(
+					HitActor,
+					BaseDamage,
+					PreviousTraceLocation - CurrentTraceLocation,
+					HitResult,
+					GetInstigatorController(),
+					this,
+					UDamageType::StaticClass()
+				);
 				HitActors.Add(HitResult.GetActor());
 				CreateFields(HitResult.ImpactPoint);
 			}

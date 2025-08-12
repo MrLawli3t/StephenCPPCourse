@@ -26,8 +26,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	virtual void PlayMontageAtSection(UAnimMontage* Montage, FName Section);
-
 protected:
 	virtual void BeginPlay() override;
 
@@ -60,7 +58,8 @@ private:
 	void ArmDisarm(const bool bDoArm);
 	void StartArmDisarmAnim(const bool bDoEquip);
 	void AttackAnim(const int32 AttackIndex);
-	void FirstEquipAnim(AWeapon* OverlappingWeapon);
+	void FirstEquip(AWeapon* OverlappingWeapon);
+	void PlayMontageAtSection(UAnimMontage* Montage, FName Section);
 
 	UPROPERTY(EditDefaultsOnly, Category="Animation")
 	TObjectPtr<UAnimMontage> EquipDisarmMontage;

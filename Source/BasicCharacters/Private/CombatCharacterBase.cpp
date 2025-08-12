@@ -4,14 +4,26 @@
 #include "CombatCharacterBase.h"
 
 #include "Components/AttributeComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "HUD/HealthBarComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Enums/CharacterTypes.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 
 ACombatCharacterBase::ACombatCharacterBase()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributeComponent"));
+
+	HealthBarWidgetComponent = CreateDefaultSubobject<UHealthBarComponent>(TEXT("HealthBarWidgetComponent"));
+	HealthBarWidgetComponent->SetupAttachment(GetRootComponent());
+
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+	bUseControllerRotationRoll = false;
 }
 
 void ACombatCharacterBase::BeginPlay()
@@ -19,6 +31,49 @@ void ACombatCharacterBase::BeginPlay()
 	Super::BeginPlay();
 
 	OnTakePointDamage.AddDynamic(this, &ACombatCharacterBase::OnHit);
+
+	if (HealthBarWidgetComponent)
+	{
+		HealthBarWidgetComponent->SetVisibility(false);
+	}
+}
+
+void ACombatCharacterBase::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+}
+
+void ACombatCharacterBase::Die()
+{
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		if (DeathMontage)
+		{
+			const int32 Section = FMath::RandRange(1, 2);
+			AnimInstance->Montage_Play(DeathMontage);
+			switch (Section)
+			{
+			case 1:
+				AnimInstance->Montage_JumpToSection("Death1", DeathMontage);
+				DeathPose = EDeathPose::EDP_Death1;
+				break;
+			case 2:
+				AnimInstance->Montage_JumpToSection("Death2", DeathMontage);
+				DeathPose = EDeathPose::EDP_Death2;
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+	if (HealthBarWidgetComponent)
+	{
+		HealthBarWidgetComponent->SetVisibility(false);
+	}
+
+	GetCapsuleComponent()->SetCollisionEnabled((ECollisionEnabled::NoCollision));
+	SetLifeSpan(DespawnTime);
 }
 
 void ACombatCharacterBase::PlayHitReactMontage(const FName& SectionName)
@@ -70,8 +125,13 @@ void ACombatCharacterBase::OnHit(AActor* DamagedActor, float Damage, class ACont
 	class UPrimitiveComponent* FHitComponent, FName BoneName, FVector ShotFromDirection, const class UDamageType* DamageType,
 	AActor* DamageCauser)
 {
-	PlayHitReactMontage(GetHitReactSection(HitLocation));
-
+	CombatTarget = InstigatedBy->GetPawn();
+	
+	if (HealthBarWidgetComponent)
+	{
+		HealthBarWidgetComponent->SetVisibility(true);
+	}
+	
 	if (HitSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, HitSound, HitLocation);
@@ -84,5 +144,18 @@ void ACombatCharacterBase::OnHit(AActor* DamagedActor, float Damage, class ACont
 			HitLocation
 		);
 	}
-}
 
+	if (AttributeComponent && HealthBarWidgetComponent)
+	{
+		AttributeComponent->ReceiveDamage(Damage);
+		HealthBarWidgetComponent->SetHealthPercent(AttributeComponent->GetHealthPercent());
+	}
+
+	if (AttributeComponent && AttributeComponent->IsAlive())
+	{
+		PlayHitReactMontage(GetHitReactSection(HitLocation));
+	} else
+	{
+		Die();
+	}
+}

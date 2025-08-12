@@ -33,7 +33,6 @@ void UMeleeSystemComponent::ToggleEquipped()
 		OnFirstEquip.ExecuteIfBound(OverlappingWeapon);
 		
 		EquippedWeapon = OverlappingWeapon;
-		EquippedWeapon->OnAttackHit.BindUObject(this, &UMeleeSystemComponent::AttackHit);
 		EquipState = EEquipState::ECS_EquippedOneHanded;
 	} else
 	{
@@ -78,17 +77,6 @@ bool UMeleeSystemComponent::CanAttack() const
 void UMeleeSystemComponent::AttackEnd()
 {
 	ActionState = EActionState::EAS_Unoccupied;
-}
-
-void UMeleeSystemComponent::AttackHit(FHitResult HitResult)
-{
-	if (HitResult.GetActor())
-	{
-		if (!OwningPawn) return;
-		DamageEvent.HitInfo = HitResult;
-		DamageEvent.Damage = 10.f;
-		HitResult.GetActor()->TakeDamage(10.f, DamageEvent, OwningPawn->GetController(), OwningPawn);
-	}
 }
 
 void UMeleeSystemComponent::Arm()
