@@ -19,7 +19,8 @@ public class BasicEnemies : ModuleRules
             {
                 "CoreUObject",
                 "Engine", 
-                "AIModule"
+                "AIModule",
+                "ItemsAndWeapons"
             }
         );
     }

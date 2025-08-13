@@ -5,10 +5,10 @@
 
 #include "Components/AttributeComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "HUD/HealthBarComponent.h"
+#include "Components/MeleeSystemComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Enums/CharacterTypes.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Items/Weapons/Weapon.h"
 
 
 ACombatCharacterBase::ACombatCharacterBase()
@@ -17,8 +17,8 @@ ACombatCharacterBase::ACombatCharacterBase()
 
 	AttributeComponent = CreateDefaultSubobject<UAttributeComponent>(TEXT("AttributeComponent"));
 
-	HealthBarWidgetComponent = CreateDefaultSubobject<UHealthBarComponent>(TEXT("HealthBarWidgetComponent"));
-	HealthBarWidgetComponent->SetupAttachment(GetRootComponent());
+	MeleeSystemComponent = CreateDefaultSubobject<UMeleeSystemComponent>(TEXT("MeleeSystemComponent"));
+	MeleeSystemComponent->SetAutoActivate(true);
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationPitch = false;
@@ -31,11 +31,7 @@ void ACombatCharacterBase::BeginPlay()
 	Super::BeginPlay();
 
 	OnTakePointDamage.AddDynamic(this, &ACombatCharacterBase::OnHit);
-
-	if (HealthBarWidgetComponent)
-	{
-		HealthBarWidgetComponent->SetVisibility(false);
-	}
+	MeleeSystemComponent->OnPlayMontageSection.BindUObject(this, &ACombatCharacterBase::PlayMontageAtSection);
 }
 
 void ACombatCharacterBase::Tick(float DeltaSeconds)
@@ -45,47 +41,7 @@ void ACombatCharacterBase::Tick(float DeltaSeconds)
 
 void ACombatCharacterBase::Die()
 {
-	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
-	{
-		if (DeathMontage)
-		{
-			const int32 Section = FMath::RandRange(1, 2);
-			AnimInstance->Montage_Play(DeathMontage);
-			switch (Section)
-			{
-			case 1:
-				AnimInstance->Montage_JumpToSection("Death1", DeathMontage);
-				DeathPose = EDeathPose::EDP_Death1;
-				break;
-			case 2:
-				AnimInstance->Montage_JumpToSection("Death2", DeathMontage);
-				DeathPose = EDeathPose::EDP_Death2;
-				break;
-			default:
-				break;
-			}
-		}
-	}
-
-	if (HealthBarWidgetComponent)
-	{
-		HealthBarWidgetComponent->SetVisibility(false);
-	}
-
 	GetCapsuleComponent()->SetCollisionEnabled((ECollisionEnabled::NoCollision));
-	SetLifeSpan(DespawnTime);
-}
-
-void ACombatCharacterBase::PlayHitReactMontage(const FName& SectionName)
-{
-	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
-	{
-		if (HitReactMontage)
-		{
-			AnimInstance->Montage_Play(HitReactMontage);
-			AnimInstance->Montage_JumpToSection(SectionName, HitReactMontage);
-		}
-	}
 }
 
 FName ACombatCharacterBase::GetHitReactSection(const FVector& ImpactPoint) const
@@ -116,6 +72,19 @@ FName ACombatCharacterBase::GetHitReactSection(const FVector& ImpactPoint) const
 	return Section;
 }
 
+void ACombatCharacterBase::PlayMontageAtSection(UAnimMontage* Montage, const FName Section)
+{
+	if (!GetMesh()) return;
+	
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance()) {
+		if (Montage)
+		{
+			AnimInstance->Montage_Play(Montage);
+			AnimInstance->Montage_JumpToSection(Section, Montage);
+		}
+	}
+}
+
 void ACombatCharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -125,13 +94,6 @@ void ACombatCharacterBase::OnHit(AActor* DamagedActor, float Damage, class ACont
 	class UPrimitiveComponent* FHitComponent, FName BoneName, FVector ShotFromDirection, const class UDamageType* DamageType,
 	AActor* DamageCauser)
 {
-	CombatTarget = InstigatedBy->GetPawn();
-	
-	if (HealthBarWidgetComponent)
-	{
-		HealthBarWidgetComponent->SetVisibility(true);
-	}
-	
 	if (HitSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, HitSound, HitLocation);
@@ -145,15 +107,14 @@ void ACombatCharacterBase::OnHit(AActor* DamagedActor, float Damage, class ACont
 		);
 	}
 
-	if (AttributeComponent && HealthBarWidgetComponent)
+	if (AttributeComponent)
 	{
 		AttributeComponent->ReceiveDamage(Damage);
-		HealthBarWidgetComponent->SetHealthPercent(AttributeComponent->GetHealthPercent());
 	}
 
 	if (AttributeComponent && AttributeComponent->IsAlive())
 	{
-		PlayHitReactMontage(GetHitReactSection(HitLocation));
+		PlayMontageAtSection(HitReactMontage, GetHitReactSection(HitLocation));
 	} else
 	{
 		Die();

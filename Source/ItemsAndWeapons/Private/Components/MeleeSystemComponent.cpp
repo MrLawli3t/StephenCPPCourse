@@ -25,6 +25,13 @@ void UMeleeSystemComponent::BeginPlay()
 	}
 }
 
+void UMeleeSystemComponent::OnComponentDestroyed(bool bDestroyingHierarchy)
+{
+	Super::OnComponentDestroyed(bDestroyingHierarchy);
+
+	if (EquippedWeapon) EquippedWeapon->Destroy();
+}
+
 void UMeleeSystemComponent::ToggleEquipped()
 {
 	if (ActionState == EActionState::EAS_Attacking) return;
@@ -33,7 +40,6 @@ void UMeleeSystemComponent::ToggleEquipped()
 	{
 		OnFirstEquip.ExecuteIfBound(OverlappingWeapon);
 		
-		EquippedWeapon = OverlappingWeapon;
 		EquipState = EEquipState::ECS_EquippedOneHanded;
 	} else
 	{
@@ -54,6 +60,7 @@ void UMeleeSystemComponent::Attack()
 {
 	if (CanAttack())
 	{
+		UE_LOG(LogTemp, Log, TEXT("Attack"));
 		ActionState = EActionState::EAS_Attacking;
 		
 		UAnimMontage* AttackMontage = EquippedWeapon->GetAttackMontage();
@@ -62,6 +69,7 @@ void UMeleeSystemComponent::Attack()
 		OnPlayMontageSection.ExecuteIfBound(AttackMontage, AttackMontage->GetSectionName(ComboIndex));
 		ComboIndex = (ComboIndex + 1) % EquippedWeapon->GetAttackMontage()->GetNumSections();
 	}
+	UE_LOG(LogTemp, Log, TEXT("Cannot attack"));
 }
 
 bool UMeleeSystemComponent::CanDisarm() const

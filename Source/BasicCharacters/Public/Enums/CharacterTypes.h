@@ -3,7 +3,7 @@
 #pragma once
 
 UENUM(BlueprintType)
-enum class EDeathPose : uint8
+enum EDeathPose
 {
 	EDP_Alive UMETA(DisplayName = "Alive"),
 	EDP_Death1 UMETA(DisplayName = "Death1"),

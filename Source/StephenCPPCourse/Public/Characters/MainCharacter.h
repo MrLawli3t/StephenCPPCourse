@@ -3,12 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
-#include "Interfaces/MeleeActor.h"
+#include "CombatCharacterBase.h"
 #include "MainCharacter.generated.h"
 
 class AWeapon;
-class UMeleeSystemComponent;
 class UCameraComponent;
 class USpringArmComponent;
 struct FInputActionInstance;
@@ -16,7 +14,7 @@ class UInputAction;
 class UInputMappingContext;
 
 UCLASS()
-class STEPHENCPPCOURSE_API AMainCharacter : public ACharacter, public IMeleeActor
+class STEPHENCPPCOURSE_API AMainCharacter : public ACombatCharacterBase
 {
 	GENERATED_BODY()
 
@@ -57,7 +55,6 @@ private:
 	void OnAttack(const FInputActionInstance& InputActionInstance);
 	void ArmDisarm(const bool bDoArm);
 	void FirstEquip(AWeapon* OverlappingWeapon);
-	void PlayMontageAtSection(UAnimMontage* Montage, FName Section);
 
 	UPROPERTY(EditDefaultsOnly, Category="Animation")
 	TObjectPtr<UAnimMontage> EquipDisarmMontage;
@@ -68,10 +65,6 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USpringArmComponent> SpringArm;
 
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UMeleeSystemComponent> MeleeSystemComponent;
-
 public:
-	FORCEINLINE virtual UMeleeSystemComponent* GetMeleeSystemComponent() const override {return MeleeSystemComponent;}
 	FORCEINLINE virtual UAnimMontage* GetEquipDisarmMontage() const override {return EquipDisarmMontage;}
 };

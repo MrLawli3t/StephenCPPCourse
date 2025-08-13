@@ -28,9 +28,6 @@ AMainCharacter::AMainCharacter()
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
 	Camera->SetupAttachment(SpringArm);
-
-	MeleeSystemComponent = CreateDefaultSubobject<UMeleeSystemComponent>(TEXT("MeleeSystemComponent"));
-	MeleeSystemComponent->SetAutoActivate(true);
 }
 
 void AMainCharacter::BeginPlay()
@@ -39,7 +36,6 @@ void AMainCharacter::BeginPlay()
 	
 	MeleeSystemComponent->OnArmDisarm.BindUObject(this, &AMainCharacter::ArmDisarm);
 	MeleeSystemComponent->OnFirstEquip.BindUObject(this, &AMainCharacter::FirstEquip);
-	MeleeSystemComponent->OnPlayMontageSection.BindUObject(this, &AMainCharacter::PlayMontageAtSection);
 
 	Tags.Add(FName("EnemyTarget"));
 }
@@ -132,18 +128,5 @@ void AMainCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		Input->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AMainCharacter::Jump);
 		Input->BindAction(EquipAction, ETriggerEvent::Started, this, &AMainCharacter::OnToggleEquipped);
 		Input->BindAction(AttackAction, ETriggerEvent::Started, this, &AMainCharacter::OnAttack);
-	}
-}
-
-void AMainCharacter::PlayMontageAtSection(UAnimMontage* Montage, FName Section)
-{
-	if (!GetMesh()) return;
-	
-	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance()) {
-		if (Montage)
-		{
-			AnimInstance->Montage_Play(Montage);
-			AnimInstance->Montage_JumpToSection(Section, Montage);
-		}
 	}
 }

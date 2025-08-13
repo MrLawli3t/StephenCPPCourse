@@ -43,6 +43,7 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
+	virtual void OnComponentDestroyed(bool bDestroyingHierarchy) override;
 
 private:
 	bool CanDisarm() const;
@@ -71,5 +72,10 @@ public:
 	FORCEINLINE EEquipState GetEquipState() const {return EquipState;}
 	FORCEINLINE void SetCanContinueCombo(const bool CanContinue) {bCanContinueCombo = CanContinue;}
 	FORCEINLINE AWeapon* GetEquippedWeapon() const {return EquippedWeapon;}
+	FORCEINLINE void SetEquippedWeapon(AWeapon* Weapon)
+	{
+		EquippedWeapon = Weapon;
+		EquipState = EEquipState::ECS_EquippedOneHanded;
+	}
 	FORCEINLINE AItem* GetOverlappingItem() const {return OverlappingItem;}
 };

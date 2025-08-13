@@ -5,9 +5,12 @@
 
 #include "AIController.h"
 #include "AITypes.h"
+#include "Components/AttributeComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/MeleeSystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "HUD/HealthBarComponent.h"
+#include "Items/Weapons/Weapon.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "Perception/PawnSensingComponent.h"
 
@@ -25,6 +28,9 @@ AEnemy::AEnemy()
 	GetCapsuleComponent()->SetGenerateOverlapEvents(false);
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Block);
 
+	HealthBarWidgetComponent = CreateDefaultSubobject<UHealthBarComponent>(TEXT("HealthBarWidgetComponent"));
+	HealthBarWidgetComponent->SetupAttachment(GetRootComponent());
+
 	PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>(TEXT("PawnSensingComponent"));
 	PawnSensingComponent->SetPeripheralVisionAngle(60.f);
 	PawnSensingComponent->SightRadius = ChasingRadius;
@@ -40,6 +46,14 @@ void AEnemy::OnHit(AActor* DamagedActor, float Damage, class AController* Instig
 	AActor* DamageCauser)
 {
 	Super::OnHit(DamagedActor, Damage, InstigatedBy, HitLocation, FHitComponent, BoneName, ShotFromDirection, DamageType, DamageCauser);
+
+	CombatTarget = InstigatedBy->GetPawn();
+	
+	if (HealthBarWidgetComponent)
+	{
+		HealthBarWidgetComponent->SetVisibility(true);
+		HealthBarWidgetComponent->SetHealthPercent(AttributeComponent->GetHealthPercent());
+	}
 	
 	CombatTarget = InstigatedBy->GetPawn();
 	EnemyState = EEnemyState::EES_Chasing;
@@ -59,6 +73,20 @@ void AEnemy::BeginPlay()
 	if (PawnSensingComponent)
 	{
 		PawnSensingComponent->OnSeePawn.AddDynamic(this, &AEnemy::OnPawnSeen);
+	}
+
+	if (HealthBarWidgetComponent)
+	{
+		HealthBarWidgetComponent->SetVisibility(false);
+	}
+
+	if (UWorld* World = GetWorld())
+	{
+		if (WeaponClass != nullptr)
+		{
+			AWeapon* Weapon = World->SpawnActor<AWeapon>(WeaponClass);
+			Weapon->Equip(GetMesh(), FName("hand_r_socket"), this, this);
+		}
 	}
 }
 
@@ -85,11 +113,11 @@ void AEnemy::Tick(float DeltaSeconds)
         	GetCharacterMovement()->MaxWalkSpeed = ChaseSpeed;
         	MoveToTarget(CombatTarget);
         	UE_LOG(LogTemp, Warning, TEXT("Chasing enemy target"));
-        } else if (InTargetRange(CombatTarget, AttackRadius) && EnemyState != EEnemyState::EES_Attacking)
+        } else if (InTargetRange(CombatTarget, AttackRadius))
         {
-	        EnemyState = EEnemyState::EES_Attacking;
+        	EnemyState = EEnemyState::EES_Attacking;
         	UE_LOG(LogTemp, Warning, TEXT("Attacking enemy target"));
-        	//TODO: Attack logic
+        	MeleeSystemComponent->Attack();
         }
 	} else
 	{
@@ -101,6 +129,30 @@ void AEnemy::Tick(float DeltaSeconds)
         	GetWorldTimerManager().SetTimer(PatrolTimer, this, &AEnemy::PatrolTimerElapsed, WaitTime);
         }
 	}
+}
+
+void AEnemy::Die()
+{
+	Super::Die();
+
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		if (DeathMontage)
+		{
+			const int32 Section = FMath::RandRange(1, 2);
+			const TEnumAsByte<EDeathPose> Pose(Section);
+
+			if (Pose > EDeathPose::EDP_Death2) return;
+			PlayMontageAtSection(DeathMontage, DeathMontage->GetSectionName(Section));
+		}
+	}
+
+	if (HealthBarWidgetComponent)
+	{
+		HealthBarWidgetComponent->SetVisibility(false);
+	}
+
+	SetLifeSpan(DespawnTime);
 }
 
 bool AEnemy::InTargetRange(const AActor* Target, const double Radius) const

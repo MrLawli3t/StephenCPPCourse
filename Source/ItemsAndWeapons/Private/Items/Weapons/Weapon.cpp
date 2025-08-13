@@ -6,7 +6,9 @@
 #include "KismetTraceUtils.h"
 #include "NiagaraComponent.h"
 #include "Components/BoxComponent.h"
+#include "Components/MeleeSystemComponent.h"
 #include "Components/SphereComponent.h"
+#include "Interfaces/MeleeActor.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -22,7 +24,7 @@ void AWeapon::Equip(USkeletalMeshComponent* Mesh, const FName SocketName, AActor
 {
 	SetOwner(NewOwner);
 	SetInstigator(NewInstigator);
-	
+		
 	SetItemState(EItemState::EIS_Equipped);
 	GetItemMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetSphereComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -31,6 +33,11 @@ void AWeapon::Equip(USkeletalMeshComponent* Mesh, const FName SocketName, AActor
 	
 	SetActorTickEnabled(false);
 	AttachToComponent(Mesh, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), SocketName);
+
+	if (const IMeleeActor* MeleeActor = Cast<IMeleeActor>(NewOwner))
+	{
+		MeleeActor->GetMeleeSystemComponent()->SetEquippedWeapon(this);
+	}
 }
 
 void AWeapon::StopAttackTrace()
